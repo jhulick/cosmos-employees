@@ -127,6 +127,8 @@ resource "azurerm_linux_web_app" "app" {
       node_version = "16-lts"
     }
   }
+
+  depends_on = [azurerm_user_assigned_identity.app_identity]
 }
 
 # Grant Managed Identity access to Cosmos
