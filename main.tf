@@ -108,7 +108,7 @@ resource "azurerm_user_assigned_identity" "app_identity" {
 # Grant Cosmos DB data access to the user-assigned identity
 resource "azurerm_role_assignment" "cosmos_data_contributor" {
   scope                = azurerm_cosmosdb_account.cosmos.id
-  role_definition_name = "Cosmos DB Built-in Data Contributor"
+  role_definition_name = "Cosmos DB Operator"
   principal_id         = azurerm_user_assigned_identity.app_identity.principal_id
 }
 
