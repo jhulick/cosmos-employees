@@ -42,5 +42,5 @@ variable "app_service_plan_name" {
 variable "app_service_name" {
   type        = string
   description = "The app service name."
-  default     = "employee-app-service"
+  default     = "employee-app-svc"
 }
