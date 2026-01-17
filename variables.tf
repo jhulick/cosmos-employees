@@ -44,3 +44,9 @@ variable "app_service_name" {
   description = "The app service name."
   default     = "employee-app-svc"
 }
+
+variable "api_source_path" {
+  type        = string
+  description = "The path to the react app source."
+  default     = "./employee-api"
+}
