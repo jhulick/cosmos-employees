@@ -10,7 +10,7 @@ variable "cosmos_account_name_prefix" {
   default     = "cosmos-employees-"
 }
 
-variable "app_service_principal_id" {
-  description = "Principal ID of the App Service / Function Managed Identity"
-  type        = string
-}
+#variable "app_service_principal_id" {
+#  description = "Principal ID of the App Service / Function Managed Identity"
+#  type        = string
+#}

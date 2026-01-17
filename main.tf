@@ -90,10 +90,26 @@ resource "azurerm_cosmosdb_sql_container" "employees" {
 # ──────────────────────────────────────────────────────────────────────────────
 # System-Assigned Managed Identity for App Service / Function
 # ──────────────────────────────────────────────────────────────────────────────
+#resource "azurerm_role_assignment" "cosmos_data_contributor" {
+#  scope                = azurerm_cosmosdb_account.cosmos.id
+#  role_definition_name = "Cosmos DB Built-in Data Contributor"
+#  principal_id         = var.app_service_principal_id  # Pass from your App Service module
+#}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# User-Assigned Managed Identity (shared for Function App + App Service)
+# ──────────────────────────────────────────────────────────────────────────────
+resource "azurerm_user_assigned_identity" "app_identity" {
+  name                = "employee-app-identity"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.location
+}
+
+# Grant Cosmos DB data access to the user-assigned identity
 resource "azurerm_role_assignment" "cosmos_data_contributor" {
   scope                = azurerm_cosmosdb_account.cosmos.id
   role_definition_name = "Cosmos DB Built-in Data Contributor"
-  principal_id         = var.app_service_principal_id  # Pass from your App Service module
+  principal_id         = azurerm_user_assigned_identity.app_identity.principal_id
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
