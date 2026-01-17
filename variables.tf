@@ -10,6 +10,24 @@ variable "cosmos_account_name_prefix" {
   default     = "cosmos-employees-"
 }
 
+variable "tenant_id" {
+  description = "Tenant ID"
+  type        = string
+  default     = "e66ee3e4-9119-4d4d-a6bd-4b1e6aa180c5"
+}
+
+variable "client_id" {
+  description = "Tenant ID"
+  type        = string
+  default     = ""
+}
+
+variable "client_secret" {
+  description = "Tenant ID"
+  type        = string
+  default     = ""
+}
+
 #variable "app_service_principal_id" {
 #  description = "Principal ID of the App Service / Function Managed Identity"
 #  type        = string

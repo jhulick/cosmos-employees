@@ -136,6 +136,93 @@ resource "null_resource" "seed_employees" {
   }
 }
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Temporary Storage Account + Container for seeding file
+# ──────────────────────────────────────────────────────────────────────────────
+resource "azurerm_storage_account" "seed_storage" {
+  name                     = "seed${random_string.seed_suffix.result}"
+  resource_group_name      = azurerm_resource_group.rg.name
+  location                 = var.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  allow_nested_items_to_be_public = false
+}
+
+resource "azurerm_storage_container" "seed_container" {
+  name                  = "seed-data"
+  storage_account_name  = azurerm_storage_account.seed_storage.name
+  container_access_type = "private"
+}
+
+# Upload seed JSON file
+resource "azurerm_storage_blob" "seed_json" {
+  name                   = "employees_seed.json"
+  storage_account_name   = azurerm_storage_account.seed_storage.name
+  storage_container_name = azurerm_storage_container.seed_container.name
+  type                   = "Block"
+  source                 = "${path.module}/../../employees_seed.json"  # Path relative to root
+  content_type           = "application/json"
+}
+
+# Generate SAS token (read-only, 1-hour expiry)
+data "azurerm_storage_account_blob_container_sas" "seed_sas" {
+  connection_string = azurerm_storage_account.seed_storage.primary_connection_string
+  container_name    = azurerm_storage_container.seed_container.name
+  https_only        = true
+
+  start  = timeadd(timestamp(), "-5m")
+  expiry = timeadd(timestamp(), "1h")
+
+  permissions {
+    read   = true
+    add    = false
+    create = false
+    write  = false
+    delete = false
+    list   = false
+  }
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Create Stored Procedure
+# ──────────────────────────────────────────────────────────────────────────────
+resource "azurerm_cosmosdb_sql_stored_procedure" "bulk_insert" {
+  name                = "bulkInsertEmployees"
+  resource_group_name = azurerm_resource_group.rg.name
+  account_name        = azurerm_cosmosdb_account.cosmos.name
+  database_name       = azurerm_cosmosdb_sql_database.db.name
+  container_name        = azurerm_cosmosdb_sql_container.employees.name
+  body                = file("${path.module}/seed_procedure.js")
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Execute seeding via AzCopy + Stored Procedure (local-exec)
+# ──────────────────────────────────────────────────────────────────────────────
+resource "null_resource" "seed_cosmos" {
+  depends_on = [
+    azurerm_cosmosdb_sql_stored_procedure.bulk_insert,
+    azurerm_storage_blob.seed_json
+  ]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      azcopy copy "${azurerm_storage_blob.seed_json.url}${data.azurerm_storage_account_blob_container_sas.seed_sas.sas}" \
+        "https://${azurerm_cosmosdb_account.cosmos.name}.documents.azure.com:443/dbs/${azurerm_cosmosdb_sql_database.db.name}/colls/${azurerm_cosmosdb_sql_container.employees.name}/sprocs/bulkInsertEmployees" \
+        --service-principal \
+        --tenant-id ${var.tenant_id} \
+        --client-id ${var.client_id} \
+        --client-secret ${var.client_secret} \
+        --method POST
+    EOT
+  }
+
+  # Optional: Trigger re-seed if container or data changes
+  triggers = {
+    container_id = azurerm_cosmosdb_sql_container.employees.id
+    seed_file    = filemd5("${path.module}/employees_seed.json")
+  }
+}
+
 # Random suffix for unique Cosmos account name
 resource "random_string" "unique" {
   length  = 8
