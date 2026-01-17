@@ -143,7 +143,7 @@ data "azurerm_role_definition" "cosmos_operator" {
 resource "azurerm_role_assignment" "cosmos_data_reader" {
   scope                = azurerm_cosmosdb_account.cosmos.id #var.cosmos_endpoint # Cosmos account ID
   role_definition_name = data.azurerm_role_definition.cosmos_reader.name
-  principal_id         = azurerm_linux_web_app.app.identity[0].principal_id
+  principal_id         = azurerm_user_assigned_identity.app_identity.principal_id
 }
 
 # Grant Cosmos DB data access to the user-assigned identity
