@@ -13,7 +13,7 @@ const containerId = 'employees'; // Your container ID
 
 // Use Managed Identity for authentication
 const credential = new DefaultAzureCredential();
-const clientOptions: CosmosClientOptions = { endpoint: cosmosEndpoint, aadCredentials: credential };
+const clientOptions = { endpoint: cosmosEndpoint, aadCredentials: credential };
 
 // Create Cosmos client with Managed Identity
 const cosmosClient = new CosmosClient(clientOptions);
