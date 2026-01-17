@@ -140,7 +140,7 @@ resource "null_resource" "seed_employees" {
 # Temporary Storage Account + Container for seeding file
 # ──────────────────────────────────────────────────────────────────────────────
 resource "azurerm_storage_account" "seed_storage" {
-  name                     = "seed${random_string.seed_suffix.result}"
+  name                     = "seed${random_string.unique.result}"
   resource_group_name      = azurerm_resource_group.rg.name
   location                 = var.location
   account_tier             = "Standard"
