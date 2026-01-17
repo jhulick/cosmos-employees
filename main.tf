@@ -105,12 +105,51 @@ resource "azurerm_user_assigned_identity" "app_identity" {
   location            = var.location
 }
 
-# Grant Cosmos DB data access to the user-assigned identity
-resource "azurerm_role_assignment" "cosmos_data_contributor" {
-  scope                = azurerm_cosmosdb_account.cosmos.id
-  role_definition_name = "Cosmos DB Operator"
-  principal_id         = azurerm_user_assigned_identity.app_identity.principal_id
+resource "azurerm_service_plan" "plan" {
+  name                = var.app_service_plan_name
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.location
+  os_type             = "Linux"
+  sku_name            = "P1v2" # Adjust as needed
 }
+
+resource "azurerm_linux_web_app" "app" {
+  name                = var.app_service_name
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.location
+  service_plan_id     = azurerm_service_plan.plan.id
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.app_identity.id]
+  }
+  site_config {
+    application_stack {
+      node_version = "16-lts"
+    }
+  }
+}
+
+# Grant Managed Identity access to Cosmos
+data "azurerm_role_definition" "cosmos_reader" {
+  name = "Cosmos DB Account Reader Role"
+}
+
+data "azurerm_role_definition" "cosmos_operator" {
+  name = "Cosmos DB Operator"
+}
+
+resource "azurerm_role_assignment" "cosmos_data_reader" {
+  scope                = azurerm_cosmosdb_account.cosmos.id #var.cosmos_endpoint # Cosmos account ID
+  role_definition_name = data.azurerm_role_definition.cosmos_reader.name
+  principal_id         = azurerm_linux_web_app.app.identity[0].principal_id
+}
+
+# Grant Cosmos DB data access to the user-assigned identity
+#resource "azurerm_role_assignment" "cosmos_data_operator" {
+#  scope                = azurerm_cosmosdb_account.cosmos.id
+#  role_definition_name = data.azurerm_role_definition.cosmos_operator.name
+#  principal_id         = azurerm_user_assigned_identity.app_identity.principal_id
+#}
 
 # Random suffix for unique Cosmos account name
 resource "random_string" "unique" {

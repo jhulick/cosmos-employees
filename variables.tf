@@ -32,3 +32,15 @@ variable "client_secret" {
 #  description = "Principal ID of the App Service / Function Managed Identity"
 #  type        = string
 #}
+
+variable "app_service_plan_name" {
+  type        = string
+  description = "The app service plan name."
+  default     = "employee-app-plan"
+}
+
+variable "app_service_name" {
+  type        = string
+  description = "The app service name."
+  default     = "employee-app-service"
+}
