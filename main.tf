@@ -32,7 +32,6 @@ resource "azurerm_cosmosdb_account" "cosmos" {
   resource_group_name               = azurerm_resource_group.rg.name
   offer_type                        = "Standard"
   kind                              = "GlobalDocumentDB"
-  enable_automatic_failover         = false
   enable_multiple_write_locations   = false
   public_network_access_enabled     = false   # Enforce private endpoint only
   ip_range_filter                   = null
@@ -174,7 +173,6 @@ resource "null_resource" "build_and_deploy_api" {
     command = <<EOT
       cd ${var.api_source_path}
       npm ci
-      npm run build
     EOT
   }
 
