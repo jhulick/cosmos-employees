@@ -181,7 +181,7 @@ resource "null_resource" "build_and_deploy_api" {
     command = <<EOT
       cd ${var.api_source_path}
       if [ -f build.zip ]; then rm build.zip; fi
-      zip -r build.zip build
+      zip -r build.zip .
     EOT
   }
 
